@@ -1,5 +1,6 @@
 package com.adidas.backend.adiclubservice.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import java.util.Random;
 
 import com.adidas.backend.adiclubservice.dto.AdiClubMemberInfoDto;
 
+@Slf4j
 @RestController
 @RequestMapping(value = "/adiclub")
 public class AdiClubRestController {
@@ -20,6 +22,7 @@ public class AdiClubRestController {
   @GetMapping
   public ResponseEntity<AdiClubMemberInfoDto> getAdiClubMemberInfo(
       @RequestParam(value = "emailAddress") final String emailAddress) {
+    log.info("ADI-CLUB service /adiclub - Requested member data for {}", emailAddress);
 
     return ResponseEntity
         .ok()
