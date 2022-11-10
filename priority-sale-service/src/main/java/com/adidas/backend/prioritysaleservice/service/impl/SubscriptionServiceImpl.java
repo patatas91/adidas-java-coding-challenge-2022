@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -28,14 +29,27 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         log.info("Url -> {}", urlTemplate);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<AdiClubMemberInfoDto> response =
-                restTemplate.getForEntity(
-                        urlTemplate,
-                        AdiClubMemberInfoDto.class);
-        AdiClubMemberInfoDto member = response.getBody();
-        log.info("Member getted -> {}", member);
+        AdiClubMemberInfoDto member;
 
-        // TODO order queue logic?
+        try {
+            ResponseEntity<AdiClubMemberInfoDto> response =
+                    restTemplate.getForEntity(
+                            urlTemplate,
+                            AdiClubMemberInfoDto.class);
+            member = response.getBody();
+
+        } catch(HttpStatusCodeException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.info("Member not registered");
+                member = new AdiClubMemberInfoDto(emailAddress, null, null);
+
+            } else {
+                log.error(e.getMessage());
+                throw e;
+            }
+        }
+
+        log.info("Member getted -> {}", member);
 
         // Add member to queue
         subscriptionEventsService.publish(member);
