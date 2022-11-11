@@ -1,67 +1,49 @@
-# What to do?
-The repo contains a skeleton of 4 Spring Boot applications, plus a Docker Compose configuration which spins up the following working environment.
 
-<img width="365" alt="image" src="https://user-images.githubusercontent.com/15728394/199699196-3bf20be2-cc51-4718-8cc2-454c8397c9d4.png">
+# What is this?
 
+This project is implemented with    
+- Maven 3.8.4    
+- JDK11    
+- Docker desktop    
+- Kafka    
+- Swagger    
 
-- _Public Service_ in the main entry point to our system, and the only accesible one to the public.
-- _Priority Sale Service_ is the service containing the priority sale logic. 
-- _Adi-Club Service_ contains the information of our adiClub members. e-mail, points, registration date...
-- _Email Service_ sends a confirmation mail to the lucky ones.
+The objetive of the project is to create a subscription service that allows users to subscribe to a shopping and provide a winner.         
 
+We have 4 microservices:
+- **AdiClub-Service:** This service return the information related to the member.
+- **PrioritySale-Service:** This service request the user information to the AdiClub-Service, and have a kafka producer to send the information to the queue
+- **Email-service:** This service have the kafka listeners to get all messages with the subscriptors information. In order to get the winner it provides an endpoint to get the winner member acording with the winner requirements
+- **Public-service:** This service makes the subscription
 
-We would like you to implement the following:
-- Subscription to the sale using the Public Service, and the internal logic, using all internal services. Reordering the queue upon new registrations, selecting the next winner... 
-- The communications among the different services, either sync or async.
-- API documentation using Swagger, API BluePrint or the tool you feel more comfortable with.
+# Steps:
+1) Call to public service with an email to make a subscription:
+![image](https://user-images.githubusercontent.com/16426967/201339047-b4902d25-7248-4dad-8b7d-637c9117bc0a.png)
 
+2) A request to PrioritySale service is received and makes a call to AdiClub service to get user data
+![image](https://user-images.githubusercontent.com/16426967/201339278-ee1b36cd-0922-4150-a6e3-1583aad894b2.png)
 
-Do not forget our challenge Non Functional Requirements:
+3) The request to AdiClub service is getted and it returns the user data:
+![image](https://user-images.githubusercontent.com/16426967/201339447-89dd2f35-5ef9-46ac-b504-e10d2c727755.png)
+
+4) Send the user data to the kafka queue, if is member to the member topic and if not to the non member topic:
+![image](https://user-images.githubusercontent.com/16426967/201340045-9c7a1114-d9bf-438c-97f7-13374438afd5.png)
+
+5) Email service with the listeners get this messages and stores it
+![image](https://user-images.githubusercontent.com/16426967/201340291-96d16780-acf2-4f29-8811-e3e058340a85.png)
+
+6) when we request the winner with the email service winner endpoint we obtain the lucky user:
+![image](https://user-images.githubusercontent.com/16426967/201340474-63700fba-3c2f-4e97-822c-ff92b7263ae1.png)
+![image](https://user-images.githubusercontent.com/16426967/201340562-0b92bb67-95be-4e97-9bbd-d437639f5d13.png)
+
+# My decisions:
+
+- In order to simulate non members, when we request to this service the user, if the points are an odd number we will return that is not a member (empty point and registration date). 
+- When a user subscribe to the service, we recover the information about this user and sended it to kafka queue (I decide to create 2 topics, members and non members) and on Email-service we have 2 listeners, one for each topic.
+- In order to store all subscriptor I created 2 list, but if we have to store the subscriptors, we have to do in a database for example.
+
+# Remaining parts:
+Due lack of time, these parts are not implemented:
 - **Security** for non-public services
-- Proper **exception handling** and REST responses.​
 - Unit **testing** for meaningful code (business logic / services).​
 
-
-We encourage you to take a look at our architectural principles. And of course, you have total freedom to propose or/and implement the improvements you want! Changes on the architecture, Introducing new services and/or containers, Reactive APIs, Distributed logging.... **Your creativity is more than welcome!**
-     
-# What would you need?
-The code requires the following tools:
-- Maven 3.8.4
-- JDK11
-- A Docker container engine: docker desktop, podman, rancher or any other
-
-
-# How to build & run the project
-### Build jar files
-`mvn clean install`
-
-### Build docker images & start the containers
-`docker-compose up -d`
-
-### Cleanup project
-Using docker compose you need to run the following command:
-`docker-compose down --rmi`
-
-Using podman you should first stop the compose environment:
-`docker-compose down` 
-And then you will need to delete the images manually.
-
-# Useful commands
-### Test dummy endpoint in public-service from your local machine
-`curl localhost:8080/dummy -s`
-
-should return http status 200 and the message
-`Hello, this is a dummy response from public service`
-
-### Test adiclub-service endpoint from priority-sale-service container
-`docker exec adidas-be-challenge-prioritysaleservice bash -c "curl -s adidas-be-challenge-adiclubservice:8080/adiclub?emailAddress=test1@gmail.com"`
-
-should return a json response similar to:
-`{"email":"test1@gmail.com","points":511,"registrationDate":"2022-04-17T08:12:41.467026Z"}`
-
-### Access Open API documentation
-In order to see UI documentation you can write the following url in your browser:
-`http://localhost:8080/swagger-ui/index.html#/`
-
-### Watch public-service logs
-`docker logs -f adidas-be-challenge-publicservice`
