@@ -33,6 +33,8 @@ public class SubscriptionEventsServiceImpl implements SubscriptionEventsService 
 
     @Override
     public AdiClubMemberInfoDto getWinner() {
+        AdiClubMemberInfoDto winner;
+
         // Get members
         log.info("Getting members...");
 
@@ -44,8 +46,9 @@ public class SubscriptionEventsServiceImpl implements SubscriptionEventsService 
 
             log.info("Result: ");
             members.forEach(System.out::println);
-
-            return members.get(0);
+            winner = members.get(0);
+            sendEmail(winner.getEmail());
+            return winner;
 
         } else if (nonMembers != null && !nonMembers.isEmpty()) {
             // Get non members
@@ -54,7 +57,9 @@ public class SubscriptionEventsServiceImpl implements SubscriptionEventsService 
 
             // Random winner
             Random r = new Random();
-            return nonMembers.get(r.nextInt(nonMembers.size()));
+            winner = nonMembers.get(r.nextInt(nonMembers.size()));
+            sendEmail(winner.getEmail());
+            return winner;
 
         } else {
             log.info("No members found!!!");
@@ -90,6 +95,10 @@ public class SubscriptionEventsServiceImpl implements SubscriptionEventsService 
         }
         nonMembers.add(member);
         log.info("NonMembers size: {}", nonMembers.size());
+    }
+
+    private void sendEmail(String email) {
+        log.info("Mail sended!!");
     }
 
 }
